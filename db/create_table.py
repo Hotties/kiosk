@@ -15,7 +15,7 @@ def create_burger(cur : pymysql.cursors.Cursor):
             price INT,
             kcal INT,
             allergic TINYINT,
-            PRIMARY KEY(INT)
+            PRIMARY KEY(id)
             )
     """)
 
@@ -29,7 +29,7 @@ def create_side_menu(cur : pymysql.cursors.Cursor):
                 allergic TINYINT,
                 is_upgradeable BOOLEAN,
                 extra_charge INT,
-                PRIMARY KEY(INT)
+                PRIMARY KEY(id)
                 )
     
 """)
