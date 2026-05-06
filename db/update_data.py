@@ -1,21 +1,35 @@
 import pandas as pd
 import pymysql
+from enum import Enum, auto
+
+class SheetName(Enum):
+    VERSION = auto()
+    BURGER = auto()
+    SIDEMENU = auto()
+    DRINK = auto()
+    SET_MENU = auto()
+    ORDER_DETAIL = auto()
 
 def update_data(cur: pymysql.cursors.Cursor, conn: pymysql.Connection):
+
+    # 0. 여기서 
+
     # 1. version 테이블에서 verion_code 가져오기
     version_code = get_version_code(cur, conn)
     
+    
     # 2. excel 파일에서 version_code 가져오기
-    excel_version_code = get_excel_version_code()  # 이 함수는 excel 파일에서 version_code를 읽어오는 함수로 구현해야 함
+    if version_code == -1:
+        excel_version_code = get_excel_version_code()  # 이 함수는 excel 파일에서 version_code를 읽어오는 함수로 구현해야 함
     
     # 3. version_code 비교하기
     if version_code != excel_version_code or version_code == -1:
         # 4. version_code가 다르면, excel 파일에서 데이터 가져와서 DB에 업데이트하기
-        data = get_data_from_excel()  # 이 함수는 excel 파일에서 데이터를 읽어오는 함수로 구현해야 함
+        datasheets = get_data_from_excel()  # 이 함수는 excel 파일에서 데이터를 읽어오는 함수로 구현해야 함
         
         # 4-2. DB에 업데이트하기
-        for item in data: ## version, burger, sidemenu, drink, set_menu, order_detail 시트를 순환
-            update_or_insert_data(cur, item, version_code)  # 이 함수는 item이 DB에 존재하는지 확인하고, 존재하면 update, 존재하지 않으면 insert 하는 함수로 구현해야 함
+        for sheet_name, sheet in datasheets.items(): ## version, burger, sidemenu, drink, set_menu, order_detail 시트를 순환
+            update_or_insert_data(cur, sheet_name, sheet, version_code)  # 이 함수는 sheet이 DB에 존재하는지 확인하고, 존재하면 update, 존재하지 않으면 insert 하는 함수로 구현해야 함
         
         # version 테이블의 version_code 업데이트
         update_version_code(cur, conn, excel_version_code)  # 이 함수는 version 테이블의 version_code를 업데이트하는 함수로 구현해야 함
@@ -23,6 +37,8 @@ def update_data(cur: pymysql.cursors.Cursor, conn: pymysql.Connection):
 ## 1. version 테이블에서 verion_code 가져오기
 def get_version_code(cur: pymysql.cursors.Cursor, conn: pymysql.Connection):
     
+    # 만약 version 테이블이 없으면 version_code는 -1로 설정
+
     try:    
         query = "SELECT version_code FROM version"
         cur.execute(query)
@@ -41,7 +57,7 @@ def get_excel_version_code():
     # 이 함수는 excel 파일에서 version_code를 읽어오는 함수로 구현해야 함
     # 예시로 pandas를 사용하여 excel 파일에서 version_code를 읽어오는 방법을 보여줍니다.
     try:
-        df = pd.read_excel('data.xlsx', sheet_name='version')  # 엑셀 파일 경로와 시트 이름
+        df = pd.read_excel('data.xlsx', sheet_name=SheetName.VERSION.name)  # 엑셀 파일 경로와 시트 이름
         version_code = df['version_code'][0]  # version_code가 있는 열과 행을 지정
         return version_code
     except Exception as e:
@@ -61,14 +77,99 @@ def get_data_from_excel():
     
 ## 4-1. excel 파일에서 데이터 가져오기
 ## 4-2. DB에 업데이트하기
-def update_or_insert_data(cur: pymysql.cursors.Cursor, item, version_code):
-    ## version_code가 -1이면 item insert, version_code가 -1이 아니면 item update
+def update_or_insert_data(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict, version_code: int):
+    ## version_code가 -1이면 sheet insert, version_code가 -1이 아니면 sheet update
     if version_code == -1:
-        # item insert
-        insert_item(cur, item)  # 이 함수는 item을 DB에 삽입하는 함수로 구현해야 함
+        # sheet insert
+        insert_sheet(cur, sheet_name,sheet)  # 이 함수는 sheet을 DB에 삽입하는 함수로 구현해야 함
     else:
-        # item update
-        update_item(cur, item)  # 이 함수는 item을 DB에 업데이트하는 함수로 구현해야 함
+        # sheet update
+        update_sheet(cur, sheet_name, sheet)  # 이 함수는 sheet을 DB에 업데이트하는 함수로 구현해야 함
+
+def insert_sheet(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict):## version, burger, sidemenu, drink, set_menu, order_detail 시트를 순환
+    # 이미 딕셔너리
+    # 이 함수는 sheet을 DB에 삽입하는 함수로 구현해야 함
+    # 이 함수는 시트 전체를 삽입하는 함수
+    # 시트 제목을 기준으로 조건문을 생성
+    # if sheet['sheet_name'] == 'burger':
+    #    #   for 반복문을 사용하여 sheet의 각 행을 DB에 삽입하는 쿼리 작성
+    if sheet_name == SheetName.VERSION.name:
+        for row in sheet:
+            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+    elif sheet_name == SheetName.BURGER.name:
+        for row in sheet:
+            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+    elif sheet_name == SheetName.SIDEMENU.name:
+        for row in sheet:
+            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+    elif sheet_name == SheetName.DRINK.name:
+        for row in sheet:
+            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+    elif sheet_name == SheetName.SET_MENU.name:
+        for row in sheet:
+            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+    elif sheet_name == SheetName.ORDER_DETAIL.name:
+        for row in sheet:
+            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+
+def insert_row(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict):
+    # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+    # 시트 제목을 기준으로 조건문을 생성
+    # if sheet_name == 'burger':
+    #   #   insert 쿼리를 작성하여 sheet의 각 행을 DB에 삽입
+    if sheet_name == SheetName.VERSION.name:
+        try:
+            query = "INSERT INTO version (version_code) VALUES (%s)"
+            cur.execute(query, (sheet['version_code']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    elif sheet_name == SheetName.BURGER.name:
+        try:
+            query = "INSERT INTO burger (burger_id, burger_name, burger_price) VALUES (%s, %s, %s)"
+            cur.execute(query, (sheet['burger_id'], sheet['burger_name'], sheet['burger_price']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    elif sheet_name == SheetName.SIDEMENU.name:
+        try:
+            query = "INSERT INTO sidemenu (sidemenu_id, sidemenu_name, sidemenu_price) VALUES (%s, %s, %s)"
+            cur.execute(query, (sheet['sidemenu_id'], sheet['sidemenu_name'], sheet['sidemenu_price']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[insert_row] DB 삽입 실패: {e}") 
+    elif sheet_name == SheetName.DRINK.name:
+        try:
+            query = "INSERT INTO drink (drink_id, drink_name, drink_price) VALUES (%s, %s, %s)"
+            cur.execute(query, (sheet['drink_id'], sheet['drink_name'], sheet['drink_price']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    elif sheet_name == SheetName.SET_MENU.name:
+        try:
+            query = "INSERT INTO set_menu (set_menu_id, set_menu_name, set_menu_price) VALUES (%s, %s, %s)"
+            cur.execute(query, (sheet['set_menu_id'], sheet['set_menu_name'], sheet['set_menu_price']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    elif sheet_name == SheetName.ORDER_DETAIL.name:
+        try:
+            query = "INSERT INTO order_detail (order_id, burger_id, sidemenu_id, drink_id, set_menu_id) VALUES (%s, %s, %s, %s, %s)"
+            cur.execute(query, (sheet['order_id'], sheet['burger_id'], sheet['sidemenu_id'], sheet['drink_id'], sheet['set_menu_id']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+
+
+def update_sheet(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict):
+    # 이 함수는 sheet을 DB에 업데이트하는 함수로 구현해야 함
+    # 이 함수를 쓰는 경우 : 시트에 새로운 행 추가, 기존 행의 정보 변경, 기존 행 삭제
+    # 경우를 어떻게 구분해야할까 
+
+    # 시트에 새로운 행 추가 : insert_row 함수 작성
+    # 기존 행의 정보 변경 : update_row 함수 작성
+    # 기존 행 삭제 : delete_row 함수 작성
+
+    # 새로운 컬럼 추가, 기존 컬럼 삭제, 기존 컬럼의 데이터 타입 변경 등은 어떻게 처리해야할까?
+    # 새로운 컬럼 추가 : alter_table_add_column 함수 작성
+    # 기존 컬럼 삭제 : alter_table_drop_column 함수 작성
+    # 기존 컬럼의 데이터 타입 변경 : alter_table_modify_column 함수 작성
+    pass
+
 
 ## version 테이블의 version_code 업데이트
 def update_version_code(cur: pymysql.cursors.Cursor, conn: pymysql.Connection, version_code):
