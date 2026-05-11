@@ -159,17 +159,119 @@ def update_sheet(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict):
     # 이 함수는 sheet을 DB에 업데이트하는 함수로 구현해야 함
     # 이 함수를 쓰는 경우 : 시트에 새로운 행 추가, 기존 행의 정보 변경, 기존 행 삭제
     # 경우를 어떻게 구분해야할까 
-
     # 시트에 새로운 행 추가 : insert_row 함수 작성
     # 기존 행의 정보 변경 : update_row 함수 작성
     # 기존 행 삭제 : delete_row 함수 작성
 
-    # 새로운 컬럼 추가, 기존 컬럼 삭제, 기존 컬럼의 데이터 타입 변경 등은 어떻게 처리해야할까?
-    # 새로운 컬럼 추가 : alter_table_add_column 함수 작성
-    # 기존 컬럼 삭제 : alter_table_drop_column 함수 작성
-    # 기존 컬럼의 데이터 타입 변경 : alter_table_modify_column 함수 작성
+    # 우선 db에서 해당 시트의 데이터를 가져온다.
+    db_data = get_data_from_db(cur, sheet_name)
+    # 그리고 각 시트의 데이터와 엑셀파일과 비교한다.
+    for row in sheet:
+        row_id = row['id']  # 각 행의 id를 기준으로 비교
+        if row_id in db_data:
+            # 해당 행의 데이터를 비교하여 바꿀 정보가 있다면 update_row 함수를 사용하여 db에 업데이트한다.
+            if has_changes(row, db_data[row_id]):  # has_changes 함수는 row와 db_data[row_id]를 비교하여 변경된 정보가 있는지 확인하는 함수로 구현해야 함
+                update_row(cur, sheet_name, row)
+        # 해당 아이디가 존재하지 않으면 insert_row 함수를 사용하여 db에 삽입한다.
+        else:
+            insert_row(cur, sheet_name, row) 
+    
+    excel_ids = {row['id'] for row in sheet}  # 엑셀 파일에 존재하는 아이디 집합
+    for db_row in db_data:
+        db_row_id = db_row['id']  # DB에서 가져온 행의 id
+        if db_row_id not in excel_ids:
+            # DB에 존재하지만 엑셀 파일에 존재하지 않는 아이디가 있다면 delete_row 함수를 사용하여 db에서 삭제한다.
+            delete_row(cur, sheet_name, db_row_id)
     pass
 
+def has_changes(row: dict, db_row: dict):
+    # 이 함수는 row와 db_row를 비교하여 변경된 정보가 있는지 확인하는 함수로 구현해야 함
+    # row와 db_row는 딕셔너리 형태로 되어있다고 가정
+    for key in row:
+        if row[key] != db_row[key]:
+            return True  # 변경된 정보가 있음
+    return False  # 변경된 정보가 없음
+
+def update_row(cur: pymysql.cursors.Cursor, sheet_name: str, row: dict):
+    # 이 함수는 row을 DB에 업데이트하는 함수로 구현해야 함
+    # 시트 제목을 기준으로 조건문을 생성
+    # if sheet_name == 'burger':
+    #   #   update 쿼리를 작성하여 row의 각 정보를 DB에 업데이트
+    if sheet_name == SheetName.VERSION.name:
+        try:
+            query = "UPDATE version SET version_code = %s WHERE id = %s"
+            cur.execute(query, (row['version_code'], row['id']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+    elif sheet_name == SheetName.BURGER.name:
+        try:
+            query = "UPDATE burger SET burger_name = %s, burger_price = %s WHERE burger_id = %s"
+            cur.execute(query, (row['burger_name'], row['burger_price'], row['burger_id']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+    elif sheet_name == SheetName.SIDEMENU.name:
+        try:
+            query = "UPDATE sidemenu SET sidemenu_name = %s, sidemenu_price = %s WHERE sidemenu_id = %s"
+            cur.execute(query, (row['sidemenu_name'], row['sidemenu_price'], row['sidemenu_id']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[update_row] DB 업데이트 실패: {e}") 
+    elif sheet_name == SheetName.DRINK.name:
+        try:
+            query = "UPDATE drink SET drink_name = %s, drink_price = %s WHERE drink_id = %s"
+            cur.execute(query, (row['drink_name'], row['drink_price'], row['drink_id']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+    elif sheet_name == SheetName.SET_MENU.name:
+        try:
+            query = "UPDATE set_menu SET set_menu_name = %s, set_menu_price = %s WHERE set_menu_id = %s"
+            cur.execute(query, (row['set_menu_name'], row['set_menu_price'], row['set_menu_id']))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+
+def delete_row(cur: pymysql.cursors.Cursor, sheet_name: str, row_id: int):
+    # 이 함수는 row_id를 DB에서 삭제하는 함수로 구현해야 함
+    # 시트 제목을 기준으로 조건문을 생성
+    # if sheet_name == 'burger':
+    #   #   delete 쿼리를 작성하여 row_id에 해당하는 행을 DB에서 삭제
+    if sheet_name == SheetName.VERSION.name:
+        try:
+            query = "DELETE FROM version WHERE id = %s"
+            cur.execute(query, (row_id))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+    elif sheet_name == SheetName.BURGER.name:
+        try:
+            query = "DELETE FROM burger WHERE burger_id = %s"
+            cur.execute(query, (row_id))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+    elif sheet_name == SheetName.SIDEMENU.name:
+        try:
+            query = "DELETE FROM sidemenu WHERE sidemenu_id = %s"
+            cur.execute(query, (row_id))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[delete_row] DB 삭제 실패: {e}") 
+    elif sheet_name == SheetName.DRINK.name:
+        try:
+            query = "DELETE FROM drink WHERE drink_id = %s"
+            cur.execute(query, (row_id))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+    elif sheet_name == SheetName.SET_MENU.name:
+        try:
+            query = "DELETE FROM set_menu WHERE set_menu_id = %s"
+            cur.execute(query, (row_id))
+        except pymysql.MySQLError as e:
+            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+
+def get_data_from_db(cur: pymysql.cursors.Cursor, sheet_name: str):
+    try:
+        
+        query = f"SELECT * FROM {sheet_name}"
+        cur.execute(query)
+        return cur.fetchall()
+    except pymysql.MySQLError as e:
+        raise Exception(f"[get_data_from_db] DB 조회 실패: {e}")
 
 ## version 테이블의 version_code 업데이트
 def update_version_code(cur: pymysql.cursors.Cursor, conn: pymysql.Connection, version_code):
