@@ -56,6 +56,7 @@ class SheetHandler(ABC):
             columns = [desc[0] for desc in self.cur.description]
             
             # {ID: {컬럼명: 값, ...}} 형태의 딕셔너리 반환
+            # ex) {1: {"burger_id": 1, "burger_name": "치즈버거", "burger_price": 5000}, ...}
             db_data = {}
             for row in rows:
                 row_dict = dict(zip(columns, row))
@@ -66,7 +67,7 @@ class SheetHandler(ABC):
             raise Exception(f"[{self.get_table_name()}] DB 데이터 로드 실패: {e}")
 
     def insert_row(self, row: dict):
-        """행 삽입 (공통 로직)"""
+        """행 삽입 (공통 로직)""" 
         try:
             cols = self.get_columns()
             placeholders = ', '.join(['%s'] * len(cols))
