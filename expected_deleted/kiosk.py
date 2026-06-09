@@ -8,6 +8,9 @@
 # # 세트 메뉴로 변경할 경우, 세트 메뉴에 포함된 음료 또는 사이드를 랜덤으로 선택
 # # 포장 또는 매장 식사 랜덤으로 선택
 
+
+## 같은 메뉴를 여러 개 주문할 수 있도록, 주문 내역을 딕셔너리로 저장하는 방식으로 변경 필요
+
 import pymysql
 
 
@@ -16,7 +19,7 @@ class Kiosk:
         self.switch = False  # 키오스크 ON/OFF 상태
         self.id = id(self)  # 고유 ID 생성
         self.name = name
-        self.order  # 주문 내역 저장
+        self.order = None  # 주문 내역 저장
         self.burger_menu = []  # 버거 메뉴 정보
         self.side_menu = []  # 사이드 메뉴 정보 
         self.drink_menu = []  # 음료 메뉴 정보
@@ -68,19 +71,27 @@ class Kiosk:
     def create_random_order(self):
         import random
         order = {}
-        order['burger'] = random.choice(self.burger_menu)
-        
-        if random.choice([True, False]):  # 세트 메뉴로 변경할지 랜덤 선택
+        # 버거를 구매 안할 수도 있음.
+        #order['burger'] = random.choice(self.burger_menu) if random.choice([True, False]) else None
+        set_menu_included = False
+        set_menu_included = random.choice([True, False])  # 세트 메뉴 포함 여부 랜덤 선택
+        if set_menu_included is True:  # 세트 메뉴로 변경할지 랜덤 선택
             order['set_menu'] = random.choice(self.set_menu)
             # 세트 메뉴에 포함된 음료 또는 사이드 랜덤 선택
             if 'drink' in order['set_menu']:
                 order['drink'] = random.choice(self.drink_menu)
             if 'side' in order['set_menu']:
                 order['side'] = random.choice(self.side_menu)
+        else:
+            order['burger'] = random.choice(self.burger_menu) if random.choice([True, False]) else None
+            order['side'] = random.choice(self.side_menu) if random.choice([True, False]) else None
+            order['drink'] = random.choice(self.drink_menu) if random.choice([True, False]) else None 
         
-        order['dine_in'] = random.choice([True, False])  # 포장 또는 매장 식사 랜덤 선택
-        self.save_order(order)
-        #self.orders.append(order)
+        if order.get('burger') is  not None or order.get('side') is not None or order.get('drink') is not None or order.get('set_menu') is not None:
+            # 주문이 하나라도 포함되어 있다면, 포장 또는 매장 식사 랜덤 선택
+            order['dine_in'] = random.choice([True, False])  # 포장 또는 매장 식사 랜덤 선택
+            self.save_order(order)
+            self.order = order
     
     # 주문 내역을 db에 저장하는 메소드 (구현 필요)
     # 바로 DB에 저장을 하는 경우, 저장 후 엑셀파일을 업데이트해야함
@@ -93,7 +104,7 @@ class Kiosk:
         from db.sheet_handlers import create_sheet_handler
 
         handler = create_sheet_handler("ORDER_DETAIL", None)  # DB 커서 전달 필요
-        self.order = order
+        #self.orders.append(order)
         handler.insert_row(order)  
         
 
@@ -104,5 +115,4 @@ class Kiosk:
         import random
         while True:
             self.create_random_order()
-            self.save_order()
             time.sleep(random.uniform(1, 5))  # 1~5초 랜덤 딜레이

@@ -4,7 +4,11 @@ Excel 데이터와 DB 데이터를 동기화 (insert/update/delete)
 """
 
 import pymysql
-from sheet_handlers import create_sheet_handler
+
+try:
+    from db.sheet_handlers import create_sheet_handler
+except ImportError:
+    from sheet_handlers import create_sheet_handler
 
 
 def sync_sheet(cur: pymysql.cursors.Cursor, sheet_name: str, excel_data: list[dict]) -> None:

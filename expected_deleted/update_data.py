@@ -93,66 +93,77 @@ def insert_sheet(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict):## v
     # 시트 제목을 기준으로 조건문을 생성
     # if sheet['sheet_name'] == 'burger':
     #    #   for 반복문을 사용하여 sheet의 각 행을 DB에 삽입하는 쿼리 작성
-    if sheet_name == SheetName.VERSION.name:
-        for row in sheet:
-            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
-    elif sheet_name == SheetName.BURGER.name:
-        for row in sheet:
-            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
-    elif sheet_name == SheetName.SIDEMENU.name:
-        for row in sheet:
-            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
-    elif sheet_name == SheetName.DRINK.name:
-        for row in sheet:
-            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
-    elif sheet_name == SheetName.SET_MENU.name:
-        for row in sheet:
-            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
-    elif sheet_name == SheetName.ORDER_DETAIL.name:
-        for row in sheet:
-            insert_row(cur, sheet_name, row)  # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+  
+    for row in sheet:
+        insert_row(cur, sheet_name, row)  
+
+    # if sheet_name == SheetName.VERSION.name:
+    #     for row in sheet:
+    #         insert_row(cur, sheet_name, row)  
+    # elif sheet_name == SheetName.BURGER.name:
+    #     for row in sheet:
+    #         insert_row(cur, sheet_name, row)  
+    # elif sheet_name == SheetName.SIDEMENU.name:
+    #     for row in sheet:
+    #         insert_row(cur, sheet_name, row) 
+    # elif sheet_name == SheetName.DRINK.name:
+    #     for row in sheet:
+    #         insert_row(cur, sheet_name, row) 
+    # elif sheet_name == SheetName.SET_MENU.name:
+    #     for row in sheet:
+    #         insert_row(cur, sheet_name, row)  
+    # elif sheet_name == SheetName.ORDER_DETAIL.name:
+    #     for row in sheet:
+    #         insert_row(cur, sheet_name, row)  
 
 def insert_row(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict):
-    # 이 함수는 sheet의 각 행을 DB에 삽입하는 함수로 구현해야 함
+   
     # 시트 제목을 기준으로 조건문을 생성
     # if sheet_name == 'burger':
     #   #   insert 쿼리를 작성하여 sheet의 각 행을 DB에 삽입
-    if sheet_name == SheetName.VERSION.name:
-        try:
-            query = "INSERT INTO version (version_code) VALUES (%s)"
-            cur.execute(query, (sheet['version_code']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
-    elif sheet_name == SheetName.BURGER.name:
-        try:
-            query = "INSERT INTO burger (burger_id, burger_name, burger_price) VALUES (%s, %s, %s)"
-            cur.execute(query, (sheet['burger_id'], sheet['burger_name'], sheet['burger_price']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
-    elif sheet_name == SheetName.SIDEMENU.name:
-        try:
-            query = "INSERT INTO sidemenu (sidemenu_id, sidemenu_name, sidemenu_price) VALUES (%s, %s, %s)"
-            cur.execute(query, (sheet['sidemenu_id'], sheet['sidemenu_name'], sheet['sidemenu_price']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[insert_row] DB 삽입 실패: {e}") 
-    elif sheet_name == SheetName.DRINK.name:
-        try:
-            query = "INSERT INTO drink (drink_id, drink_name, drink_price) VALUES (%s, %s, %s)"
-            cur.execute(query, (sheet['drink_id'], sheet['drink_name'], sheet['drink_price']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
-    elif sheet_name == SheetName.SET_MENU.name:
-        try:
-            query = "INSERT INTO set_menu (set_menu_id, set_menu_name, set_menu_price) VALUES (%s, %s, %s)"
-            cur.execute(query, (sheet['set_menu_id'], sheet['set_menu_name'], sheet['set_menu_price']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
-    elif sheet_name == SheetName.ORDER_DETAIL.name:
-        try:
-            query = "INSERT INTO order_detail (order_id, burger_id, sidemenu_id, drink_id, set_menu_id) VALUES (%s, %s, %s, %s, %s)"
-            cur.execute(query, (sheet['order_id'], sheet['burger_id'], sheet['sidemenu_id'], sheet['drink_id'], sheet['set_menu_id']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+
+    try:
+        query = f"INSERT INTO {sheet_name} ({', '.join(sheet.keys())}) VALUES ({', '.join(['%s'] * len(sheet))})"
+        cur.execute(query, tuple(sheet.values()))
+    except pymysql.MySQLError as e:
+        raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+
+    # if sheet_name == SheetName.VERSION.name:
+    #     try:
+    #         query = "INSERT INTO version (version_code) VALUES (%s)"
+    #         cur.execute(query, (sheet['version_code']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    # elif sheet_name == SheetName.BURGER.name:
+    #     try:
+    #         query = "INSERT INTO burger (burger_id, burger_name, burger_price) VALUES (%s, %s, %s)"
+    #         cur.execute(query, (sheet['burger_id'], sheet['burger_name'], sheet['burger_price']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    # elif sheet_name == SheetName.SIDEMENU.name:
+    #     try:
+    #         query = "INSERT INTO sidemenu (sidemenu_id, sidemenu_name, sidemenu_price) VALUES (%s, %s, %s)"
+    #         cur.execute(query, (sheet['sidemenu_id'], sheet['sidemenu_name'], sheet['sidemenu_price']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[insert_row] DB 삽입 실패: {e}") 
+    # elif sheet_name == SheetName.DRINK.name:
+    #     try:
+    #         query = "INSERT INTO drink (drink_id, drink_name, drink_price) VALUES (%s, %s, %s)"
+    #         cur.execute(query, (sheet['drink_id'], sheet['drink_name'], sheet['drink_price']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    # elif sheet_name == SheetName.SET_MENU.name:
+    #     try:
+    #         query = "INSERT INTO set_menu (set_menu_id, set_menu_name, set_menu_price) VALUES (%s, %s, %s)"
+    #         cur.execute(query, (sheet['set_menu_id'], sheet['set_menu_name'], sheet['set_menu_price']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[insert_row] DB 삽입 실패: {e}")
+    # elif sheet_name == SheetName.ORDER_DETAIL.name:
+    #     try:
+    #         query = "INSERT INTO order_detail (order_id, burger_id, sidemenu_id, drink_id, set_menu_id) VALUES (%s, %s, %s, %s, %s)"
+    #         cur.execute(query, (sheet['order_id'], sheet['burger_id'], sheet['sidemenu_id'], sheet['drink_id'], sheet['set_menu_id']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[insert_row] DB 삽입 실패: {e}")
 
 
 def update_sheet(cur: pymysql.cursors.Cursor, sheet_name: str, sheet: dict):
@@ -197,72 +208,88 @@ def update_row(cur: pymysql.cursors.Cursor, sheet_name: str, row: dict):
     # 시트 제목을 기준으로 조건문을 생성
     # if sheet_name == 'burger':
     #   #   update 쿼리를 작성하여 row의 각 정보를 DB에 업데이트
-    if sheet_name == SheetName.VERSION.name:
-        try:
-            query = "UPDATE version SET version_code = %s WHERE id = %s"
-            cur.execute(query, (row['version_code'], row['id']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
-    elif sheet_name == SheetName.BURGER.name:
-        try:
-            query = "UPDATE burger SET burger_name = %s, burger_price = %s WHERE burger_id = %s"
-            cur.execute(query, (row['burger_name'], row['burger_price'], row['burger_id']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
-    elif sheet_name == SheetName.SIDEMENU.name:
-        try:
-            query = "UPDATE sidemenu SET sidemenu_name = %s, sidemenu_price = %s WHERE sidemenu_id = %s"
-            cur.execute(query, (row['sidemenu_name'], row['sidemenu_price'], row['sidemenu_id']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[update_row] DB 업데이트 실패: {e}") 
-    elif sheet_name == SheetName.DRINK.name:
-        try:
-            query = "UPDATE drink SET drink_name = %s, drink_price = %s WHERE drink_id = %s"
-            cur.execute(query, (row['drink_name'], row['drink_price'], row['drink_id']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
-    elif sheet_name == SheetName.SET_MENU.name:
-        try:
-            query = "UPDATE set_menu SET set_menu_name = %s, set_menu_price = %s WHERE set_menu_id = %s"
-            cur.execute(query, (row['set_menu_name'], row['set_menu_price'], row['set_menu_id']))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+
+
+    try:
+        query = f"UPDATE {sheet_name} SET {', '.join([f'{key} = %s' for key in row.keys() if key != 'id'])} WHERE id = %s"
+        values = [value for key, value in row.items() if key != 'id'] + [row['id']]
+        cur.execute(query, tuple(values))
+    except pymysql.MySQLError as e:
+        raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+
+    # if sheet_name == SheetName.VERSION.name:
+    #     try:
+    #         query = "UPDATE version SET version_code = %s WHERE id = %s"
+    #         cur.execute(query, (row['version_code'], row['id']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+    # elif sheet_name == SheetName.BURGER.name:
+    #     try:
+    #         query = "UPDATE burger SET burger_name = %s, burger_price = %s WHERE burger_id = %s"
+    #         cur.execute(query, (row['burger_name'], row['burger_price'], row['burger_id']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+    # elif sheet_name == SheetName.SIDEMENU.name:
+    #     try:
+    #         query = "UPDATE sidemenu SET sidemenu_name = %s, sidemenu_price = %s WHERE sidemenu_id = %s"
+    #         cur.execute(query, (row['sidemenu_name'], row['sidemenu_price'], row['sidemenu_id']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[update_row] DB 업데이트 실패: {e}") 
+    # elif sheet_name == SheetName.DRINK.name:
+    #     try:
+    #         query = "UPDATE drink SET drink_name = %s, drink_price = %s WHERE drink_id = %s"
+    #         cur.execute(query, (row['drink_name'], row['drink_price'], row['drink_id']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[update_row] DB 업데이트 실패: {e}")
+    # elif sheet_name == SheetName.SET_MENU.name:
+    #     try:
+    #         query = "UPDATE set_menu SET set_menu_name = %s, set_menu_price = %s WHERE set_menu_id = %s"
+    #         cur.execute(query, (row['set_menu_name'], row['set_menu_price'], row['set_menu_id']))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[update_row] DB 업데이트 실패: {e}")
 
 def delete_row(cur: pymysql.cursors.Cursor, sheet_name: str, row_id: int):
     # 이 함수는 row_id를 DB에서 삭제하는 함수로 구현해야 함
     # 시트 제목을 기준으로 조건문을 생성
     # if sheet_name == 'burger':
     #   #   delete 쿼리를 작성하여 row_id에 해당하는 행을 DB에서 삭제
-    if sheet_name == SheetName.VERSION.name:
-        try:
-            query = "DELETE FROM version WHERE id = %s"
-            cur.execute(query, (row_id))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
-    elif sheet_name == SheetName.BURGER.name:
-        try:
-            query = "DELETE FROM burger WHERE burger_id = %s"
-            cur.execute(query, (row_id))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
-    elif sheet_name == SheetName.SIDEMENU.name:
-        try:
-            query = "DELETE FROM sidemenu WHERE sidemenu_id = %s"
-            cur.execute(query, (row_id))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[delete_row] DB 삭제 실패: {e}") 
-    elif sheet_name == SheetName.DRINK.name:
-        try:
-            query = "DELETE FROM drink WHERE drink_id = %s"
-            cur.execute(query, (row_id))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
-    elif sheet_name == SheetName.SET_MENU.name:
-        try:
-            query = "DELETE FROM set_menu WHERE set_menu_id = %s"
-            cur.execute(query, (row_id))
-        except pymysql.MySQLError as e:
-            raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+
+    try:
+        query = f"DELETE FROM {sheet_name} WHERE id = %s"
+        cur.execute(query, (row_id))
+    except pymysql.MySQLError as e:
+        raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+
+    # if sheet_name == SheetName.VERSION.name:
+    #     try:
+    #         query = "DELETE FROM version WHERE id = %s"
+    #         cur.execute(query, (row_id))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+    # elif sheet_name == SheetName.BURGER.name:
+    #     try:
+    #         query = "DELETE FROM burger WHERE burger_id = %s"
+    #         cur.execute(query, (row_id))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+    # elif sheet_name == SheetName.SIDEMENU.name:
+    #     try:
+    #         query = "DELETE FROM sidemenu WHERE sidemenu_id = %s"
+    #         cur.execute(query, (row_id))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[delete_row] DB 삭제 실패: {e}") 
+    # elif sheet_name == SheetName.DRINK.name:
+    #     try:
+    #         query = "DELETE FROM drink WHERE drink_id = %s"
+    #         cur.execute(query, (row_id))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[delete_row] DB 삭제 실패: {e}")
+    # elif sheet_name == SheetName.SET_MENU.name:
+    #     try:
+    #         query = "DELETE FROM set_menu WHERE set_menu_id = %s"
+    #         cur.execute(query, (row_id))
+    #     except pymysql.MySQLError as e:
+    #         raise Exception(f"[delete_row] DB 삭제 실패: {e}")
 
 def get_data_from_db(cur: pymysql.cursors.Cursor, sheet_name: str):
     try:

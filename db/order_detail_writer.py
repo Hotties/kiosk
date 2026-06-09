@@ -2,7 +2,11 @@
 ## sheet handlers.py를 import
 
 import pymysql
-from sheet_handlers import OrderDetailHandler
+
+try:
+    from db.sheet_handlers import OrderDetailHandler
+except ImportError:
+    from sheet_handlers import OrderDetailHandler
 
 ## def get_data_from_order_detail_table(cur) -> list[dict]:
 

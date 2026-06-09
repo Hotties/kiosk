@@ -4,7 +4,11 @@ Excel 파일 읽기 모듈
 """
 
 import pandas as pd
-from sheet_handlers import SheetName
+
+try:
+    from db.sheet_handlers import SheetName
+except ImportError:
+    from sheet_handlers import SheetName
 
 
 def get_excel_version_code(excel_file_path: str = 'data.xlsx') -> int:
