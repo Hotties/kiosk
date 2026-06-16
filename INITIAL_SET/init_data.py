@@ -67,48 +67,50 @@ def load_data_from_excel(excel_file_path: str = str(PROJECT_ROOT / 'data.xlsx'))
                     handler = create_sheet_handler(SheetName.BURGER.name, cursor)
                     burger_rows = excel_data[SheetName.BURGER.name]
                     
+                    print("burger_rows:", burger_rows)  # 디버깅용 출력
+
                     for row in burger_rows:
-                        if row.get('burger_name') and row.get('burger_price') is not None:
+                        if row.get('menu_name') and row.get('price'):
                             # burger_id가 없으면 DB에서 자동 생성 (AUTO_INCREMENT)
                             handler.insert_row(row)
                     
                     print(f"   ✓ {len(burger_rows)}개 레코드 저장 완료\n")
                 
-                # 3. SIDEMENU 테이블
-                if SheetName.SIDEMENU.name in excel_data:
-                    print(f"📝 '{SheetName.SIDEMENU.name}' 시트 데이터 로드 중...")
-                    handler = create_sheet_handler(SheetName.SIDEMENU.name, cursor)
-                    sidemenu_rows = excel_data[SheetName.SIDEMENU.name]
+                # # 3. SIDEMENU 테이블
+                # if SheetName.SIDEMENU.name in excel_data:
+                #     print(f"📝 '{SheetName.SIDEMENU.name}' 시트 데이터 로드 중...")
+                #     handler = create_sheet_handler(SheetName.SIDEMENU.name, cursor)
+                #     sidemenu_rows = excel_data[SheetName.SIDEMENU.name]
                     
-                    for row in sidemenu_rows:
-                        if row.get('sidemenu_name') and row.get('sidemenu_price') is not None:
-                            handler.insert_row(row)
+                #     for row in sidemenu_rows:
+                #         if row.get('sidemenu_name') and row.get('sidemenu_price') is not None:
+                #             handler.insert_row(row)
                     
-                    print(f"   ✓ {len(sidemenu_rows)}개 레코드 저장 완료\n")
+                #     print(f"   ✓ {len(sidemenu_rows)}개 레코드 저장 완료\n")
                 
-                # 4. DRINK 테이블
-                if SheetName.DRINK.name in excel_data:
-                    print(f"📝 '{SheetName.DRINK.name}' 시트 데이터 로드 중...")
-                    handler = create_sheet_handler(SheetName.DRINK.name, cursor)
-                    drink_rows = excel_data[SheetName.DRINK.name]
+                # # 4. DRINK 테이블
+                # if SheetName.DRINK.name in excel_data:
+                #     print(f"📝 '{SheetName.DRINK.name}' 시트 데이터 로드 중...")
+                #     handler = create_sheet_handler(SheetName.DRINK.name, cursor)
+                #     drink_rows = excel_data[SheetName.DRINK.name]
                     
-                    for row in drink_rows:
-                        if row.get('drink_name') and row.get('drink_price') is not None:
-                            handler.insert_row(row)
+                #     for row in drink_rows:
+                #         if row.get('drink_name') and row.get('drink_price') is not None:
+                #             handler.insert_row(row)
                     
-                    print(f"   ✓ {len(drink_rows)}개 레코드 저장 완료\n")
+                #     print(f"   ✓ {len(drink_rows)}개 레코드 저장 완료\n")
                 
-                # 5. SET_MENU 테이블
-                if SheetName.SET_MENU.name in excel_data:
-                    print(f"📝 '{SheetName.SET_MENU.name}' 시트 데이터 로드 중...")
-                    handler = create_sheet_handler(SheetName.SET_MENU.name, cursor)
-                    set_menu_rows = excel_data[SheetName.SET_MENU.name]
+                # # 5. SET_MENU 테이블
+                # if SheetName.SET_MENU.name in excel_data:
+                #     print(f"📝 '{SheetName.SET_MENU.name}' 시트 데이터 로드 중...")
+                #     handler = create_sheet_handler(SheetName.SET_MENU.name, cursor)
+                #     set_menu_rows = excel_data[SheetName.SET_MENU.name]
                     
-                    for row in set_menu_rows:
-                        if row.get('set_menu_name') and row.get('set_menu_price') is not None:
-                            handler.insert_row(row)
+                #     for row in set_menu_rows:
+                #         if row.get('set_menu_name') and row.get('set_menu_price') is not None:
+                #             handler.insert_row(row)
                     
-                    print(f"   ✓ {len(set_menu_rows)}개 레코드 저장 완료\n")
+                #     print(f"   ✓ {len(set_menu_rows)}개 레코드 저장 완료\n")
                 
                 conn.commit()
                 print("✓ 모든 데이터가 데이터베이스에 성공적으로 저장되었습니다!")

@@ -8,10 +8,11 @@
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+from INITIAL_SET.create_table import initialize_database
+from INITIAL_SET.init_data import initialize_all
+from INITIAL_SET.init_data import PROJECT_ROOT
 from db.connect_db import db_Connect
 from kiosk2 import Kiosk
-
 
 def run_kiosk_orders(kiosk_name: str, max_orders: int = 10) -> dict:
     """
@@ -150,20 +151,27 @@ def verify_orders_in_db() -> None:
 
 
 def main():
-    """메인 테스트 함수"""
-    print("\n키오스크 멀티스레딩 동시성 테스트 시작...")
-    print(f"테스트 설정: 3개 키오스크, 각 10개 주문\n")
     
-    # 동시에 3개의 키오스크 실행 (각 10개 주문)
-    results = run_concurrent_kiosks(num_kiosks=3, orders_per_kiosk=10)
+    initialize_database()
+    import sys
+    excel_path = sys.argv[1] if len(sys.argv) > 1 else str(PROJECT_ROOT / 'data.xlsx')
+    initialize_all(excel_path)
+
+
+    # """메인 테스트 함수"""
+    # print("\n키오스크 멀티스레딩 동시성 테스트 시작...")
+    # print(f"테스트 설정: 3개 키오스크, 각 10개 주문\n")
     
-    # 결과 출력
-    print_test_results(results)
+    # # 동시에 3개의 키오스크 실행 (각 10개 주문)
+    # results = run_concurrent_kiosks(num_kiosks=3, orders_per_kiosk=10)
     
-    # 데이터베이스 검증
-    verify_orders_in_db()
+    # # 결과 출력
+    # print_test_results(results)
     
-    print("테스트 완료!")
+    # # 데이터베이스 검증
+    # verify_orders_in_db()
+    
+    # print("테스트 완료!")
 
 
 if __name__ == "__main__":

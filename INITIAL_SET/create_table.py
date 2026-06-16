@@ -27,7 +27,7 @@ def create_tables(conn: pymysql.connections.Connection) -> bool:
             # 1. VERSION 테이블
             create_version_table = """
             CREATE TABLE IF NOT EXISTS `version` (
-                `version_code` INT PRIMARY KEY
+                `version_code` VARCHAR(50) PRIMARY KEY
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """
             cursor.execute(create_version_table)
