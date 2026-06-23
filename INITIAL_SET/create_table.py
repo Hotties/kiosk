@@ -41,26 +41,26 @@ def create_tables(conn: pymysql.connections.Connection) -> bool:
                 `price` INT NOT NULL,
                 `kcal` INT NOT NULL,
                 `is_upgradeable` BOOLEAN DEFAULT FALSE,
-                `allergic` BIT(8) NOT NULL DEFAULT b'00000000'
+                `allergic` VARCHAR(8) NOT NULL DEFAULT '00000000'
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """
             cursor.execute(create_burger_table)
             print("✓ 'burger' 테이블 생성 완료")
 
-            # 3. SIDEMENU 테이블
-            create_sidemenu_table = """
-            CREATE TABLE IF NOT EXISTS `sidemenu` (
+            # 3. SIDE_MENU 테이블
+            create_side_menu_table = """
+            CREATE TABLE IF NOT EXISTS `side_menu` (
                 `id` INT AUTO_INCREMENT PRIMARY KEY,
                 `menu_name` VARCHAR(100) NOT NULL,
                 `price` INT NOT NULL,
                 `kcal` INT NOT NULL,
-                `allergic` BIT(8) NOT NULL DEFAULT b'00000000',
+                `allergic` VARCHAR(8) NOT NULL DEFAULT '00000000',
                 `is_upgradeable` BOOLEAN DEFAULT FALSE,
                 extra_charge INT DEFAULT 0
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """
-            cursor.execute(create_sidemenu_table)
-            print("✓ 'sidemenu' 테이블 생성 완료")
+            cursor.execute(create_side_menu_table)
+            print("✓ 'side_menu' 테이블 생성 완료")
 
             # 4. DRINK 테이블
             create_drink_table = """
@@ -82,7 +82,7 @@ def create_tables(conn: pymysql.connections.Connection) -> bool:
                 `id` INT AUTO_INCREMENT PRIMARY KEY,
                 `menu_name` VARCHAR(100) NOT NULL,
                 burger_id INT,
-                sidemenu_id INT,
+                side_menu_id INT,
                 drink_id INT,
                 `price` INT NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -99,13 +99,13 @@ def create_tables(conn: pymysql.connections.Connection) -> bool:
                 `is_takeout` BOOLEAN DEFAULT TRUE,
 
                 `burger_id` INT,
-                `sidemenu_id` INT,
+                `side_menu_id` INT,
                 `drink_id` INT,
                 `set_menu_id` INT,
                 `price` INT NOT NULL,
 
                 FOREIGN KEY (`burger_id`) REFERENCES `burger`(`id`) ON DELETE SET NULL,
-                FOREIGN KEY (`sidemenu_id`) REFERENCES `sidemenu`(`id`) ON DELETE SET NULL,
+                FOREIGN KEY (`side_menu_id`) REFERENCES `side_menu`(`id`) ON DELETE SET NULL,
                 FOREIGN KEY (`drink_id`) REFERENCES `drink`(`id`) ON DELETE SET NULL,
                 FOREIGN KEY (`set_menu_id`) REFERENCES `set_menu`(`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

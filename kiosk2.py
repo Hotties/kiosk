@@ -10,6 +10,7 @@ from db.sheet_handlers import create_sheet_handler
 
 class Kiosk:
     def __init__(self, name: str, conn: pymysql.connections.Connection | None = None):
+        self.kiosk_id = None
         self.name = name
         self.switch = False
         self.id = id(self)
@@ -32,7 +33,9 @@ class Kiosk:
             raise RuntimeError("DB 연결이 설정되지 않았습니다.")
 
         self.cur = self.conn.cursor(DictCursor)
-        self.switch = True
+        self.switch = True 
+        self.kiosk_id = random.randint(1, 10)*100
+        print(f"키오스크 '{self.name}'가 켜졌습니다. (ID: {self.kiosk_id})")
         self.load_menus()
 
     def off(self) -> None:
@@ -56,7 +59,7 @@ class Kiosk:
             raise RuntimeError("DB 커서가 열려 있지 않습니다. 먼저 on()을 호출하세요.")
 
         self.burger_menu = list(create_sheet_handler("BURGER", self.cur).load_db_data().values())
-        self.side_menu = list(create_sheet_handler("SIDEMENU", self.cur).load_db_data().values())
+        self.side_menu = list(create_sheet_handler("SIDE_MENU", self.cur).load_db_data().values())
         self.drink_menu = list(create_sheet_handler("DRINK", self.cur).load_db_data().values())
         self.set_menu = list(create_sheet_handler("SET_MENU", self.cur).load_db_data().values())
 
@@ -71,13 +74,17 @@ class Kiosk:
             raise RuntimeError("메뉴가 로드되지 않았습니다. load_menus()를 호출하거나 on()을 다시 실행하세요.")
 
         order: dict = {
+            "date": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "order_number": self.kiosk_id, ## 한번 해보기
+            "is_takeout": None,
             "burger": None,
             "side": None,
             "drink": None,
             "set_menu": None,
-            "dine_in": None,
             "price": 0
         }
+
+        #print(f"{self.burger_menu=}, {self.side_menu=}, {self.drink_menu=}, {self.set_menu=}")
 
         if random.choice([True, False]) and self.set_menu:
             order["set_menu"] = self._random_item(self.set_menu)
@@ -104,8 +111,10 @@ class Kiosk:
             order["price"] += order["drink"].get("price", 0) if order["drink"] else 0
 
         if any([order["burger"], order["side"], order["drink"], order["set_menu"]]):
-            order["dine_in"] = random.choice([True, False])
+            order["is_takeout"] = random.choice([True, False])
+            order["order_number"] += 1
             self.order = order
+            print(f"키오스크 '{self.name}'에서 생성된 주문: {order['price']}\n")
             self.save_order(order)
             return order
 
@@ -123,12 +132,18 @@ class Kiosk:
             raise RuntimeError("DB 커서가 열려 있지 않습니다. 먼저 on()을 호출하세요.")
 
         row = {
-            "order_id": None,
+            "id" : None,
+            "date": order.get("date"),
+            "order_number": order.get("order_number"),
+            "is_takeout": order.get("is_takeout"),
             "burger_id": self._extract_id(order.get("burger"), "burger_id"),
             "sidemenu_id": self._extract_id(order.get("side"), "sidemenu_id"),
             "drink_id": self._extract_id(order.get("drink"), "drink_id"),
             "set_menu_id": self._extract_id(order.get("set_menu"), "set_menu_id"),
+            "price": order.get("price")
         }
+
+        print(f"저장할 주문 데이터: {row}")
 
         handler = create_sheet_handler("ORDER_DETAIL", self.cur)
         handler.insert_row(row)

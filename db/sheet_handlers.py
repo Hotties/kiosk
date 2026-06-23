@@ -12,7 +12,7 @@ class SheetName(Enum):
     """지원하는 시트 이름"""
     VERSION = auto()
     BURGER = auto()
-    SIDEMENU = auto()
+    SIDE_MENU = auto()
     DRINK = auto()
     SET_MENU = auto()
     ORDER_DETAIL = auto()
@@ -52,16 +52,32 @@ class SheetHandler(ABC):
             self.cur.execute(query)
             rows = self.cur.fetchall()
             
+            # print(f"[{self.get_table_name()}] DB 데이터 로드 중... 총 {len(rows)} 행")
+            # print(f"첫 2행 샘플: {rows[:2]}\n")  # 로드된 데이터 중 처음 2개 샘플 출력
+
             # 컬럼명 추출
             columns = [desc[0] for desc in self.cur.description]
             
+            # print(f"[{self.get_table_name()}] 컬럼명: {columns}\n")
+
             # {ID: {컬럼명: 값, ...}} 형태의 딕셔너리 반환
             # ex) {1: {"burger_id": 1, "burger_name": "치즈버거", "burger_price": 5000}, ...}
             db_data = {}
+
             for row in rows:
-                row_dict = dict(zip(columns, row))
-                row_id = row_dict[self.get_id_column()]
-                db_data[row_id] = row_dict
+                # print(f"[{self.get_table_name()}] 처리 중 행: {row}\n")
+                row_id = row[self.get_id_column()]
+                db_data[row_id] = row
+
+            # for row in rows:
+            #     row_dict = dict(zip(columns, row))
+            #     print(f"[{self.get_table_name()}] 처리 중 행: {row_dict}\n")
+            #     row_id = row_dict[self.get_id_column()]
+            #     print(f"[{self.get_table_name()}] ID 추출: {row_id}\n")
+            #     db_data[row_id] = row_dict
+            # print(f"[{self.get_table_name()}] DB 데이터 로드 성공: {len(db_data)} 행")
+            # print(f"샘플 데이터: {list(db_data.values())[:2]}")  # 로드된 데이터 중 처음 2개 샘플 출력
+
             return db_data
         except pymysql.MySQLError as e:
             raise Exception(f"[{self.get_table_name()}] DB 데이터 로드 실패: {e}")
@@ -118,23 +134,23 @@ class BurgerHandler(SheetHandler):
         return "burger"
 
     def get_id_column(self) -> str:
-        return "burger_id"
+        return "id"
 
     def get_columns(self) -> list[str]:
-        return ["burger_id", "burger_name", "burger_price"]
+        return ["id", "menu_name", "price", "kcal", "is_upgradeable", "allergic"]
 
 
-class SidemenuHandler(SheetHandler):
-    """SIDEMENU 시트 핸들러"""
+class SideMenuHandler(SheetHandler):
+    """SIDE_MENU 시트 핸들러"""
 
     def get_table_name(self) -> str:
-        return "sidemenu"
+        return "side_menu"
 
     def get_id_column(self) -> str:
-        return "sidemenu_id"
+        return "id"
 
     def get_columns(self) -> list[str]:
-        return ["sidemenu_id", "sidemenu_name", "sidemenu_price"]
+        return ["id", "menu_name", "price", "kcal", "allergic", "is_upgradeable", "extra_charge"]
 
 
 class DrinkHandler(SheetHandler):
@@ -144,10 +160,10 @@ class DrinkHandler(SheetHandler):
         return "drink"
 
     def get_id_column(self) -> str:
-        return "drink_id"
+        return "id"
 
     def get_columns(self) -> list[str]:
-        return ["drink_id", "drink_name", "drink_price"]
+        return ["id", "menu_name", "price", "kcal", "is_upgradeable", "extra_charge"]
 
 
 class SetMenuHandler(SheetHandler):
@@ -157,10 +173,10 @@ class SetMenuHandler(SheetHandler):
         return "set_menu"
 
     def get_id_column(self) -> str:
-        return "set_menu_id"
+        return "id"
 
     def get_columns(self) -> list[str]:
-        return ["set_menu_id", "set_menu_name", "set_menu_price"]
+        return ["id", "menu_name", "burger_id", "side_menu_id", "drink_id", "price"]
 
 
 class OrderDetailHandler(SheetHandler):
@@ -170,10 +186,10 @@ class OrderDetailHandler(SheetHandler):
         return "order_detail"
 
     def get_id_column(self) -> str:
-        return "order_id"
+        return "id"
 
     def get_columns(self) -> list[str]:
-        return ["order_id", "burger_id", "sidemenu_id", "drink_id", "set_menu_id"]
+        return ["id", "date", "order_number", "is_takeout", "burger_id", "side_menu_id", "drink_id", "set_menu_id", "price"]
 
 
 def create_sheet_handler(sheet_name: str, cur: pymysql.cursors.Cursor) -> SheetHandler:
@@ -193,7 +209,7 @@ def create_sheet_handler(sheet_name: str, cur: pymysql.cursors.Cursor) -> SheetH
     handlers = {
         SheetName.VERSION.name: VersionHandler,
         SheetName.BURGER.name: BurgerHandler,
-        SheetName.SIDEMENU.name: SidemenuHandler,
+        SheetName.SIDE_MENU.name: SideMenuHandler,
         SheetName.DRINK.name: DrinkHandler,
         SheetName.SET_MENU.name: SetMenuHandler,
         SheetName.ORDER_DETAIL.name: OrderDetailHandler,
