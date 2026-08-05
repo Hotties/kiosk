@@ -89,17 +89,10 @@ class Kiosk:
         if random.choice([True, False]) and self.set_menu:
             order["set_menu"] = self._random_item(self.set_menu)
             order["price"] += order["set_menu"].get("price", 0)
-            if self.drink_menu and self.side_menu:
-                if random.choice([True, False]):
-                    order["drink"] = self._random_item(self.drink_menu)
-                    order["price"] += order["drink"].get("extra_charge", 0)
-                else:
-                    order["side"] = self._random_item(self.side_menu)
-                    order["price"] += order["side"].get("extra_charge", 0)
-            elif self.drink_menu:
+            if random.choice([True, False]):
                 order["drink"] = self._random_item(self.drink_menu)
                 order["price"] += order["drink"].get("extra_charge", 0)
-            elif self.side_menu:
+            if random.choice([True, False]):
                 order["side"] = self._random_item(self.side_menu)
                 order["price"] += order["side"].get("extra_charge", 0)
         else:
@@ -130,18 +123,30 @@ class Kiosk:
     def save_order(self, order: dict) -> None:
         if self.cur is None:
             raise RuntimeError("DB 커서가 열려 있지 않습니다. 먼저 on()을 호출하세요.")
-
-        row = {
-            "id" : None,
-            "date": order.get("date"),
-            "order_number": order.get("order_number"),
-            "is_takeout": order.get("is_takeout"),
-            "burger_id": self._extract_id(order.get("burger"), "burger_id"),
-            "sidemenu_id": self._extract_id(order.get("side"), "sidemenu_id"),
-            "drink_id": self._extract_id(order.get("drink"), "drink_id"),
-            "set_menu_id": self._extract_id(order.get("set_menu"), "set_menu_id"),
-            "price": order.get("price")
-        }
+        if order.get("set_menu") is not None:
+            row = {
+                "id" : None,
+                "date": order.get("date"),
+                "order_number": order.get("order_number"),
+                "is_takeout": order.get("is_takeout"),
+                "burger_id": order.get("set_menu", {}).get("burger_id") if order.get("set_menu") else None,
+                "side_menu_id": order.get("set_menu", {}).get("side_menu_id") if order.get("set_menu") else None,
+                "drink_id": order.get("set_menu", {}).get("drink_id") if order.get("set_menu") else None,
+                "set_menu_id": order.get("set_menu", {}).get("id") if order.get("set_menu") else None,
+                "price": order.get("price")
+            }
+        else:
+            row = {
+                "id" : None,
+                "date": order.get("date"),
+                "order_number": order.get("order_number"),
+                "is_takeout": order.get("is_takeout"),
+                "burger_id": self._extract_id(order.get("burger"), "id"),
+                "side_menu_id": self._extract_id(order.get("side"), "id"),
+                "drink_id": self._extract_id(order.get("drink"), "id"),
+                "set_menu_id": None,
+                "price": order.get("price")
+            }
 
         print(f"저장할 주문 데이터: {row}")
 
