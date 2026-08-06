@@ -9,8 +9,8 @@ from db.sheet_handlers import create_sheet_handler
 ##
 
 class Kiosk:
-    def __init__(self, name: str, conn: pymysql.connections.Connection | None = None):
-        self.kiosk_id = None
+    def __init__(self, kiosk_id: int, name: str, conn: pymysql.connections.Connection | None = None):
+        self.kiosk_id = kiosk_id
         self.name = name
         self.switch = False
         self.id = id(self)
@@ -34,7 +34,9 @@ class Kiosk:
 
         self.cur = self.conn.cursor(DictCursor)
         self.switch = True 
-        self.kiosk_id = random.randint(1, 10)*100
+        # 지금 현 코드로는 키오스크 id가 겹치는 현상 발생 -> 각 키오스크 별 id를 다르게 부여하려면 어떻게 해야할까
+        self.kiosk_id = random.randint(1, 10)*100 ## (1~9)*100 
+
         print(f"키오스크 '{self.name}'가 켜졌습니다. (ID: {self.kiosk_id})")
         self.load_menus()
 
@@ -66,7 +68,7 @@ class Kiosk:
     def _random_item(self, menu: list[dict]) -> dict | None:
         return random.choice(menu) if menu else None
 
-    def create_random_order(self) -> dict | None:
+    def create_random_order(self) -> dict | None: ## order 생성 -> save_order() : order을 리스트 형식이 아닌 dict로 하나씩 저장하는 형태
         if not self.switch:
             raise RuntimeError("키오스크가 켜져 있지 않습니다. 먼저 on()을 호출하세요.")
 
@@ -105,7 +107,8 @@ class Kiosk:
 
         if any([order["burger"], order["side"], order["drink"], order["set_menu"]]):
             order["is_takeout"] = random.choice([True, False])
-            order["order_number"] += 1
+            ##order["order_number"] += 1 ## create_random_order() 호출 시마다 order_number 증가 -> 항상 101,201,301 이렇게 나옴 -> 문제 발견
+
             self.order = order
             print(f"키오스크 '{self.name}'에서 생성된 주문: {order['price']}\n")
             self.save_order(order)
@@ -159,6 +162,7 @@ class Kiosk:
         created = 0
         while self.switch and (max_orders is None or created < max_orders):
             if self.create_random_order() is not None:
+                self.kiosk_id += 1  # 주문이 생성될 때마다 kiosk_id 증가
                 created += 1
             time.sleep(random.uniform(*delay_range))
 

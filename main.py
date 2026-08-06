@@ -13,12 +13,14 @@ from INITIAL_SET.init_data import initialize_all
 from INITIAL_SET.init_data import PROJECT_ROOT
 from db.connect_db import db_Connect
 from kiosk2 import Kiosk
+import numpy as np
 
-def run_kiosk_orders(kiosk_name: str, max_orders: int = 10) -> dict:
+def run_kiosk_orders(kiosk_id: int, kiosk_name: str, max_orders: int = 10) -> dict:
     """
     개별 키오스크를 실행하여 주문을 생성합니다.
     
     Args:
+        kiosk_id: 키오스크 ID
         kiosk_name: 키오스크 이름
         max_orders: 생성할 최대 주문 수
     
@@ -30,7 +32,7 @@ def run_kiosk_orders(kiosk_name: str, max_orders: int = 10) -> dict:
         
         # 각 스레드에서 독립적인 데이터베이스 연결 생성
         conn = db_Connect()
-        kiosk = Kiosk(kiosk_name, conn)
+        kiosk = Kiosk(kiosk_id, kiosk_name, conn)
         
         # 키오스크 켜기
         kiosk.on(connect_if_missing=False)
@@ -61,11 +63,12 @@ def run_kiosk_orders(kiosk_name: str, max_orders: int = 10) -> dict:
         }
 
 
-def run_concurrent_kiosks(num_kiosks: int = 3, orders_per_kiosk: int = 10) -> list[dict]:
+def run_concurrent_kiosks(kiosk_ids: list[int], num_kiosks: int = 3, orders_per_kiosk: int = 10) -> list[dict]:
     """
     여러 키오스크를 멀티스레딩으로 동시에 실행합니다.
     
     Args:
+        kiosk_ids: 키오스크 ID 리스트
         num_kiosks: 동시 실행할 키오스크 수
         orders_per_kiosk: 각 키오스크당 생성할 주문 수
     
@@ -77,7 +80,7 @@ def run_concurrent_kiosks(num_kiosks: int = 3, orders_per_kiosk: int = 10) -> li
     with ThreadPoolExecutor(max_workers=num_kiosks) as executor:
         # 각 키오스크를 별도의 스레드에서 실행
         futures = [
-            executor.submit(run_kiosk_orders, f"Kiosk-{i+1}", orders_per_kiosk)
+            executor.submit(run_kiosk_orders, kiosk_ids[i], f"Kiosk-{i+1}", orders_per_kiosk)
             for i in range(num_kiosks)
         ]
         
@@ -159,13 +162,17 @@ def main():
     ## 초기 테이블 생성 완료
 
 
-
     """메인 테스트 함수"""
     print("\n키오스크 멀티스레딩 동시성 테스트 시작...")
     print(f"테스트 설정: 3개 키오스크, 각 10개 주문\n")
     
     # 동시에 3개의 키오스크 실행 (각 10개 주문)
-    results = run_concurrent_kiosks(num_kiosks=1, orders_per_kiosk=10)
+    kiosk_nums = 3
+    orders_per_kiosk = 10
+    kiosk_ids = np.random.choice(range(1, 10), size=kiosk_nums, replace=False)  # 1~99 사이의 랜덤한 키오스크 ID 생성
+    kiosk_ids = list(kiosk_ids)  # numpy array를 list로 변환
+
+    results = run_concurrent_kiosks(kiosk_ids, num_kiosks=3, orders_per_kiosk=orders_per_kiosk)
     
     # 결과 출력
     print_test_results(results)
