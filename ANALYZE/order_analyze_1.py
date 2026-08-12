@@ -37,10 +37,10 @@ class OrderAnalyzer:
         """
         try:
             query = """
-                SELECT DATE(order_date) as order_date, SUM(total_price) as daily_sales
+                SELECT DATE(`date`) as order_date, SUM(price) as daily_sales
                 FROM order_detail
-                WHERE order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY DATE(order_date)
+                WHERE `date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY DATE(`date`)
                 ORDER BY order_date ASC
             """
             self.cur.execute(query, (days,))
@@ -67,10 +67,10 @@ class OrderAnalyzer:
         """
         try:
             query = """
-                SELECT DATE_FORMAT(order_date, '%Y-%m') as month, SUM(total_price) as monthly_sales
+                SELECT DATE_FORMAT(`date`, '%%Y-%%m') as month, SUM(price) as monthly_sales
                 FROM order_detail
-                WHERE order_date >= DATE_SUB(NOW(), INTERVAL %s MONTH)
-                GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+                WHERE `date` >= DATE_SUB(NOW(), INTERVAL %s MONTH)
+                GROUP BY DATE_FORMAT(`date`, '%%Y-%%m')
                 ORDER BY month ASC
             """
             self.cur.execute(query, (months,))
@@ -84,7 +84,7 @@ class OrderAnalyzer:
         except Exception as e:
             raise Exception(f"[get_monthly_sales] 월별 매출 조회 실패: {e}")
 
-    def get_hourly_sales(self, days: int = 1) -> dict:
+    def get_hourly_sales(self, days: int = 7) -> dict:
         """
         시간대별 매출 통계 조회
         
@@ -95,11 +95,18 @@ class OrderAnalyzer:
             {시간: 매출액, ...} 형태의 딕셔너리 (시간: 00~23)
         """
         try:
+            # query = """
+            #     SELECT HOUR(date) as hour, SUM(total_price) as hourly_sales
+            #     FROM order_detail
+            #     WHERE `date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+            #     GROUP BY HOUR(`date`)
+            #     ORDER BY hour ASC
+            # """
             query = """
-                SELECT HOUR(order_date) as hour, SUM(total_price) as hourly_sales
+                SELECT HOUR(date) as hour, SUM(price) as hourly_sales
                 FROM order_detail
-                WHERE order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY HOUR(order_date)
+                WHERE date >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY HOUR(date)
                 ORDER BY hour ASC
             """
             self.cur.execute(query, (days,))
@@ -128,14 +135,14 @@ class OrderAnalyzer:
         try:
             query = """
                 SELECT 
-                    b.burger_id,
-                    b.burger_name,
-                    COUNT(od.order_id) as order_count,
-                    SUM(od.total_price) as sales
+                    b.id as burger_id,
+                    b.menu_name as burger_name,
+                    COUNT(*) as order_count,
+                    SUM(od.price) as sales
                 FROM order_detail od
-                INNER JOIN burger b ON od.burger_id = b.burger_id
-                WHERE od.order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY b.burger_id, b.burger_name
+                INNER JOIN burger b ON od.burger_id = b.id
+                WHERE od.`date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY b.id, b.menu_name
                 ORDER BY order_count DESC
                 LIMIT %s
             """
@@ -159,14 +166,14 @@ class OrderAnalyzer:
             # 버거
             burger_query = """
                 SELECT 
-                    b.burger_id,
-                    b.burger_name,
+                    b.id as burger_id,
+                    b.menu_name as burger_name,
                     COUNT(*) as count,
-                    SUM(od.total_price) as sales
+                    SUM(od.price) as sales
                 FROM order_detail od
-                INNER JOIN burger b ON od.burger_id = b.burger_id
-                WHERE od.order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY b.burger_id
+                INNER JOIN burger b ON od.burger_id = b.id
+                WHERE od.`date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY b.id, b.menu_name
                 ORDER BY count DESC
                 LIMIT %s
             """
@@ -176,14 +183,14 @@ class OrderAnalyzer:
             # 사이드
             side_query = """
                 SELECT 
-                    s.sidemenu_id,
-                    s.sidemenu_name,
+                    s.id as side_menu_id,
+                    s.menu_name as side_menu_name,
                     COUNT(*) as count,
-                    SUM(od.total_price) as sales
+                    SUM(od.price) as sales
                 FROM order_detail od
-                INNER JOIN sidemenu s ON od.sidemenu_id = s.sidemenu_id
-                WHERE od.order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY s.sidemenu_id
+                INNER JOIN side_menu s ON od.side_menu_id = s.id
+                WHERE od.`date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY s.id, s.menu_name
                 ORDER BY count DESC
                 LIMIT %s
             """
@@ -193,14 +200,14 @@ class OrderAnalyzer:
             # 음료
             drink_query = """
                 SELECT 
-                    d.drink_id,
-                    d.drink_name,
+                    d.id as drink_id,
+                    d.menu_name as drink_name,
                     COUNT(*) as count,
-                    SUM(od.total_price) as sales
+                    SUM(od.price) as sales
                 FROM order_detail od
-                INNER JOIN drink d ON od.drink_id = d.drink_id
-                WHERE od.order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY d.drink_id
+                INNER JOIN drink d ON od.drink_id = d.id
+                WHERE od.`date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY d.id, d.menu_name
                 ORDER BY count DESC
                 LIMIT %s
             """
@@ -210,14 +217,14 @@ class OrderAnalyzer:
             # 세트
             set_query = """
                 SELECT 
-                    s.set_menu_id,
-                    s.set_menu_name,
+                    s.id as set_menu_id,
+                    s.menu_name as set_menu_name,
                     COUNT(*) as count,
-                    SUM(od.total_price) as sales
+                    SUM(od.price) as sales
                 FROM order_detail od
-                INNER JOIN set_menu s ON od.set_menu_id = s.set_menu_id
-                WHERE od.order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY s.set_menu_id
+                INNER JOIN set_menu s ON od.set_menu_id = s.id
+                WHERE od.`date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY s.id, s.menu_name
                 ORDER BY count DESC
                 LIMIT %s
             """
@@ -240,10 +247,10 @@ class OrderAnalyzer:
         """
         try:
             query = """
-                SELECT DATE(order_date) as order_date, COUNT(*) as order_count
+                SELECT DATE(`date`) as order_date, COUNT(*) as order_count
                 FROM order_detail
-                WHERE order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY DATE(order_date)
+                WHERE `date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY DATE(`date`)
                 ORDER BY order_date ASC
             """
             self.cur.execute(query, (days,))
@@ -271,12 +278,12 @@ class OrderAnalyzer:
         try:
             query = """
                 SELECT 
-                    dine_in,
+                    is_takeout,
                     COUNT(*) as count,
-                    SUM(total_price) as sales
+                    SUM(price) as sales
                 FROM order_detail
-                WHERE order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
-                GROUP BY dine_in
+                WHERE `date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                GROUP BY is_takeout
             """
             self.cur.execute(query, (days,))
             rows = self.cur.fetchall()
@@ -287,7 +294,7 @@ class OrderAnalyzer:
             }
             
             for row in rows:
-                key = "dine_in" if row['dine_in'] else "takeout"
+                key = "takeout" if bool(row['is_takeout']) else "dine_in"
                 result[key]['count'] = row['count']
                 result[key]['sales'] = row['sales']
             
@@ -307,9 +314,9 @@ class OrderAnalyzer:
         """
         try:
             query = """
-                SELECT SUM(total_price) as total_sales
+                SELECT SUM(price) as total_sales
                 FROM order_detail
-                WHERE order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
+                WHERE `date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
             """
             self.cur.execute(query, (days,))
             row = self.cur.fetchone()
@@ -353,7 +360,7 @@ class OrderAnalyzer:
         query = """
             SELECT COUNT(*) as count
             FROM order_detail
-            WHERE order_date >= DATE_SUB(NOW(), INTERVAL %s DAY)
+            WHERE `date` >= DATE_SUB(NOW(), INTERVAL %s DAY)
         """
         self.cur.execute(query, (days,))
         row = self.cur.fetchone()
